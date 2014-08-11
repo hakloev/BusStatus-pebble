@@ -1,0 +1,24 @@
+{
+  "uuid": "dbdd5d06-f8a9-41b2-89a0-b6e0c81525be",
+  "shortName": "OS-P",
+  "longName": "onlinestatus-pebble",
+  "companyName": "MakeAwesomeHappen",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": 
+    [
+        {
+            "type":"font",
+            "name":"FONT_BEBAS_NEUE_54_BOLD",
+            "file":"fonts/BebasNeue.otf"
+        }
+    ]
+  }
+}
