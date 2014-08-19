@@ -1,6 +1,6 @@
 #include <pebble.h>
 
-#define KEY_TEMP 0
+#define KEY_STOPNAME 0
 
 static Window *window;
 static TextLayer *os_layer;
@@ -93,7 +93,7 @@ static void main_window_load(Window *window) {
     os_layer = text_layer_create((GRect) { .origin = { 0, 102 }, .size = { bounds.size.w, 42 } });
     text_layer_set_background_color(os_layer, GColorClear);
     text_layer_set_text_color(os_layer, GColorWhite);
-    text_layer_set_text(os_layer, "Laster status...");
+    text_layer_set_text(os_layer, "Laster info...");
     text_layer_set_text_alignment(os_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(os_layer));
 }
@@ -108,14 +108,14 @@ static void main_window_unload(Window *window) {
 static void inbox_received_callback(DictionaryIterator *iter, void *context) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Message recieved from JS");
     
-    static char temp_buffer[10];
+    static char temp_buffer[] = "xxxxxxxxxxxxxxxxx";
 
     Tuple *t = dict_read_first(iter);
 
     while (t != NULL) {
         switch (t->key) {
-        case KEY_TEMP:
-            snprintf(temp_buffer, sizeof(temp_buffer), "%dC", (int)t->value->int32);
+        case KEY_STOPNAME:
+            snprintf(temp_buffer, sizeof(temp_buffer), "%s", t->value->cstring);
             break;
         default:
             APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
@@ -124,7 +124,7 @@ static void inbox_received_callback(DictionaryIterator *iter, void *context) {
         t = dict_read_next(iter);
     }
     text_layer_set_text(os_layer, temp_buffer);
-    text_layer_set_font(os_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+    text_layer_set_font(os_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
 
 }
 
