@@ -11,7 +11,7 @@ var xmlreq = function(url, type, callback) {
             console.log('Error with xmlreq');
         }
     };
-    xhr.open(type, url);
+    xhr.open(type, url, false);
     xhr.send();
 }
 
@@ -19,7 +19,7 @@ function getPosition() {
     navigator.geolocation.getCurrentPosition(
         locationSuccess,
         locationFailed,
-        {timeout: 15000, maximumAge: 60000}
+        {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
     );
 }
 
@@ -34,12 +34,26 @@ function locationSuccess(pos) {
         function(responseText) {
             //parse and send
             var json = JSON.parse(responseText);
-            console.log('All stops: ' + json[0].locationId);
             
-            var closestStop = haversine(json, pos);
+            var stopDict = haversine(json, pos);
+            
+            var stopTimes;
+            xmlreq(stopurl + stopDict["stopid"] , 'GET',
+                function(responseText) {
+                    stopTimes = JSON.parse(responseText);
+                }    
+            );
 
-            var dict = {
-                "0": closestStop
+             var dict = {
+                "0": stopDict["stopname"],
+                "1": stopTimes.next[0].l,
+            }
+            
+            if (stopTimes.next[0]) {
+                dict["2"] = 'L' + stopTimes.next[0].l + ': '+ stopTimes.next[0].t.substring(11,16) + ' ' + stopTimes.next[0].d
+            }
+            if (stopTimes.next[1]) {
+                dict["3"] = 'L' + stopTimes.next[1].l + ': '+ stopTimes.next[1].t.substring(11,16) + ' ' + stopTimes.next[1].d
             }
 
             Pebble.sendAppMessage(dict, 
@@ -85,10 +99,12 @@ function haversine(stops, pos) {
             currentNearest = d;
             currentStop = stops[i]['locationId'];
             currentStopName = stops[i]['name'];
-            console.log(currentStopName);
+            console.log('Curr nearest ' + currentStopName + ' / ' + d);
         }
     }
-    return currentStopName;
+    return {"stopname": currentStopName.substring(0, 16), 
+            "stopid": currentStop, 
+            "stopdist": d};
 }
 
 

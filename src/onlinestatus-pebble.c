@@ -1,9 +1,15 @@
 #include <pebble.h>
 
-#define KEY_STOPNAME 0
+#define KEY_BUSSTOP 0
+#define KEY_BUSID 1
+#define KEY_STOPTIME1 2
+#define KEY_STOPTIME2 3
+
 
 static Window *window;
-static TextLayer *os_layer;
+static TextLayer *stopname_layer;
+static TextLayer *stoptime_layer;
+static TextLayer *stoptime1_layer;
 static TextLayer *time_layer;
 static TextLayer *date_layer;
 static Layer *line_layer;
@@ -12,6 +18,10 @@ void accel_tap_handler(AccelAxisType axis, int32_t direction) {
     // check accel here
     APP_LOG(APP_LOG_LEVEL_INFO, "Pebble was shaked");
     
+    text_layer_set_text(stopname_layer, "");
+    text_layer_set_text(stoptime_layer, "Laster info...");
+    text_layer_set_text(stoptime1_layer, "");
+
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
     dict_write_uint8(iter, 0, 0);
@@ -76,11 +86,11 @@ static void main_window_load(Window *window) {
     layer_add_child(window_layer, text_layer_get_layer(time_layer));
     text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
     
-    date_layer = text_layer_create((GRect) { .origin = { 0, 53 }, .size = { bounds.size.w, 21 } });
+    date_layer = text_layer_create((GRect) { .origin = { 0, 53 }, .size = { bounds.size.w, 19 } });
     text_layer_set_background_color(date_layer, GColorClear);
     text_layer_set_text_color(date_layer, GColorWhite);
     text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
-    text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+    text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     layer_add_child(window_layer, text_layer_get_layer(date_layer));
 
     update_time(NULL);
@@ -90,17 +100,34 @@ static void main_window_load(Window *window) {
     layer_set_update_proc(line_layer, line_layer_update);
     layer_add_child(window_layer, line_layer);
 
-    os_layer = text_layer_create((GRect) { .origin = { 0, 102 }, .size = { bounds.size.w, 42 } });
-    text_layer_set_background_color(os_layer, GColorClear);
-    text_layer_set_text_color(os_layer, GColorWhite);
-    text_layer_set_text(os_layer, "Laster info...");
-    text_layer_set_text_alignment(os_layer, GTextAlignmentCenter);
-    layer_add_child(window_layer, text_layer_get_layer(os_layer));
+    stopname_layer = text_layer_create((GRect) { .origin = { 0, 87 }, .size = { bounds.size.w, 42 } });
+    text_layer_set_background_color(stopname_layer, GColorClear);
+    text_layer_set_text_color(stopname_layer, GColorWhite);
+    text_layer_set_text(stopname_layer, "");
+    text_layer_set_text_alignment(stopname_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(stopname_layer));
+
+    stoptime_layer = text_layer_create((GRect) { .origin = { 0, 110 }, .size = { bounds.size.w, 42 } });
+    text_layer_set_background_color(stoptime_layer, GColorClear);
+    text_layer_set_text_color(stoptime_layer, GColorWhite);
+    text_layer_set_text(stoptime_layer, "Laster info...");
+    text_layer_set_text_alignment(stoptime_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(stoptime_layer));
+
+     stoptime1_layer = text_layer_create((GRect) { .origin = { 0, 130 }, .size = { bounds.size.w, 42 } });
+    text_layer_set_background_color(stoptime1_layer, GColorClear);
+    text_layer_set_text_color(stoptime1_layer, GColorWhite);
+    text_layer_set_text(stoptime1_layer, "");
+    text_layer_set_text_alignment(stoptime1_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(stoptime1_layer));
+
 }
 
 static void main_window_unload(Window *window) {
     text_layer_destroy(time_layer);
-    text_layer_destroy(os_layer);
+    text_layer_destroy(stopname_layer);
+    text_layer_destroy(stoptime_layer);
+    text_layer_destroy(stoptime1_layer);
     text_layer_destroy(date_layer);
     layer_destroy(line_layer);
 }
@@ -108,14 +135,25 @@ static void main_window_unload(Window *window) {
 static void inbox_received_callback(DictionaryIterator *iter, void *context) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Message recieved from JS");
     
-    static char temp_buffer[] = "xxxxxxxxxxxxxxxxx";
-
+    static char stop_buffer[16];
+    static char time_buffer[40];
+    static char time_buffer1[40];
+    
     Tuple *t = dict_read_first(iter);
 
     while (t != NULL) {
         switch (t->key) {
-        case KEY_STOPNAME:
-            snprintf(temp_buffer, sizeof(temp_buffer), "%s", t->value->cstring);
+        case KEY_BUSSTOP:
+            snprintf(stop_buffer, sizeof(stop_buffer), "%s", t->value->cstring);
+            break;
+        case KEY_BUSID:
+            //snprintf(time_buffer, sizeof(time_buffer), "%s", t->value->cstring);
+            break;
+        case KEY_STOPTIME1:
+            snprintf(time_buffer, sizeof(time_buffer), "%s", t->value->cstring);
+            break;
+        case KEY_STOPTIME2:
+            snprintf(time_buffer1, sizeof(time_buffer1), "%s", t->value->cstring);
             break;
         default:
             APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
@@ -123,9 +161,14 @@ static void inbox_received_callback(DictionaryIterator *iter, void *context) {
         }
         t = dict_read_next(iter);
     }
-    text_layer_set_text(os_layer, temp_buffer);
-    text_layer_set_font(os_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    text_layer_set_text(stopname_layer, stop_buffer);
+    text_layer_set_font(stopname_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
 
+    text_layer_set_text(stoptime_layer, time_buffer);
+    text_layer_set_font(stoptime_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+
+    text_layer_set_text(stoptime1_layer, time_buffer1);
+    text_layer_set_font(stoptime1_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
