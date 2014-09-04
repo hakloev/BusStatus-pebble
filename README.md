@@ -1,4 +1,6 @@
-OnlineStatus-pebble
+BusStatus-pebble
 ===================
 
-Repo for hosting pebble watchface, showing office status. Work in progress
+Repo for hosting pebble watchface, showing bus information in Trondheim. Work in progress
+
+Based on tmn's Bybussen-Pebble
